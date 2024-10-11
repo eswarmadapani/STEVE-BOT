@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced ChatGPT-like Chat Application</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #343541;
+            --text-color: #d1d5db;
+            --user-msg-bg: #5c5e6c;
+            --bot-msg-bg: #444654;
+            --input-bg: #40414f;
+            --border-color: #565869;
+            --header-bg: #202123;
+            --btn-color: #10a37f;
+        }
+
+        .light-theme {
+            --bg-color: #f7f7f8;
+            --text-color: #343541;
+            --user-msg-bg: #d1d5db;
+            --bot-msg-bg: #f7f7f8;
+            --input-bg: #ffffff;
+            --border-color: #d1d5db;
+            --header-bg: #ffffff;
+            --btn-color: #10a37f;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .chat-header {
+            background-color: var(--header-bg);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chat-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .chat {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 60px auto 0;
+            background-color: var(--bg-color);
+            flex-grow: 1;
+        }
+        .chat-body {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
+        }
+        .chat-message.user {
+            align-self: flex-end;
+            background-color: var(--user-msg-bg);
+            color: var(--text-color);
+        }
+        .chat-message.bot {
+            align-self: flex-start;
+            background-color: var(--bot-msg-bg);
+            color: var(--text-color);
+        }
+        .chat-footer {
+            padding: 15px;
+            background-color: var(--input-bg);
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--border-color);
+        }
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+        }
+        .chat-footer textarea {
+            flex-grow: 1;
+            margin-right: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            resize: none;
+            overflow: hidden;
+            min-height: 40px;
+            max-height: 200px;
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .chat-footer textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.5);
+        }
+        .btn-send {
+            background-color: var(--btn-color);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-send:hover {
+            background-color: #0e906f;
+        }
+        .btn-send:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-send svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+        .btn-send:hover svg {
+            transform: translateX(5px);
+        }
+        .timestamp {
+            font-size: 0.7em;
+            color: #888;
+            position: absolute;
+            bottom: -15px;
+            right: 5px;
+        }
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: typing 1s infinite;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        .char-count {
+            font-size: 0.8em;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <div class="chat-header-content">
+                <span>Steve-Bot</span>
+                <button class="theme-toggle" id="theme-toggle">🌓</button>
+            </div>
+        </header>
+
+        <div class="chat">
+            <div class="chat-body" id="chat-body">
+            </div>
+
+            <div class="chat-footer">
+                <div class="input-container">
+                    <textarea class="form-control" id="message-input" placeholder="Send a message..." rows="1"></textarea>
+                    <button class="btn-send" id="send-button" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <div class="char-count" id="char-count">0 / 500</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let isLightTheme = false;
+            const maxChars = 500;
+
+            function updateTextarea() {
+                const textarea = $('#message-input');
+                textarea.css('height', 'auto');
+                textarea.css('height', textarea[0].scrollHeight + 'px');
+            }
+
+            function updateCharCount() {
+                const charCount = $('#message-input').val().length;
+                $('#char-count').text(`${charCount} / ${maxChars}`);
+                $('#send-button').prop('disabled', charCount === 0 || charCount > maxChars);
+            }
+
+            $('#message-input').on('input', function() {
+                updateTextarea();
+                updateCharCount();
+            });
+
+            $('#send-button').click(function () {
+                sendMessage();
+            });
+
+            $('#message-input').keypress(function (e) {
+                if (e.which == 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            $('#theme-toggle').click(function() {
+                isLightTheme = !isLightTheme;
+                $('body').toggleClass('light-theme', isLightTheme);
+            });
+
+            function sendMessage() {
+                var userMessage = $('#message-input').val().trim();
+                if (userMessage && userMessage.length <= maxChars) {
+                    var timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    $('#chat-body').append('<div class="chat-message user">' + userMessage + '<span class="timestamp">' + timestamp + '</span></div>');
+
+                    $('#message-input').val("");
+                    updateTextarea();
+                    updateCharCount();
+
+                    $('#chat-body').scrollTop($('#chat-body')[0].scrollHeight);
+
+                    // Show typing indicator
+                    $('#chat-body').append('<div class="typing-indicator"><span></span><span></span><span></span></div>');
+                    $('.typing-indicator').show();
+
+                    $.ajax({
+                        url: '/chat',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ "message": userMessage }),
+                        success: function (response) {
+                            // Hide typing indicator
+                            $('.typing-indicator').remove();
+
+                            var botTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            $('#chat-body').append('<div class="chat-message bot">' + response.response + '<span class="timestamp">' + botTimestamp + '</span></div>');
+                            $('#chat-body').scrollTop($('#chat-body')[0].scrollHeight);
+                        },
+                        error: function (xhr, status, error) {
+                            // Hide typing indicator
+                            $('.typing-indicator').remove();
+
+                            console.error("Error: " + error);
+                        }
+                    });
+                }
+            }
+
+            // Initial setup
+            updateTextarea();
+            updateCharCount();
+        });
+    </script>
+</body>
+</html>
